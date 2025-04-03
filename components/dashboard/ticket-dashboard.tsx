@@ -32,12 +32,14 @@ export function TicketDashboard({ tickets }: TicketDashboardProps) {
   }
 
   return (
-    <div className="space-y-4">
-      <TicketFilters
-        selectedPriority={selectedPriority}
-        selectedStatus={selectedStatus}
-        onFilterChange={handleFilterChange}
-      />
+    <div className="space-y-6 max-w-5xl mx-auto">
+      <div className="flex justify-center w-full">
+        <TicketFilters
+          selectedPriority={selectedPriority}
+          selectedStatus={selectedStatus}
+          onFilterChange={handleFilterChange}
+        />
+      </div>
       <TicketList tickets={filteredTickets} />
     </div>
   )

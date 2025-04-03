@@ -19,7 +19,7 @@ export function TicketList({ tickets }: TicketListProps) {
   }
 
   return (
-    <div>
+    <div className="w-full">
       {tickets.length === 0 ? (
         <div className="flex flex-col items-center justify-center rounded-lg border border-dashed p-8 text-center animate-in fade-in-50">
           <div className="mx-auto flex max-w-[420px] flex-col items-center justify-center text-center">
@@ -30,15 +30,22 @@ export function TicketList({ tickets }: TicketListProps) {
           </div>
         </div>
       ) : (
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-          {tickets.map((ticket) => (
-            <TicketCard key={ticket.id} ticket={ticket} onClick={() => handleTicketClick(ticket)} />
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 mx-auto">
+          {tickets.map((ticket, index) => (
+            <TicketCard key={ticket.id} ticket={ticket} onClick={() => handleTicketClick(ticket)} index={index} />
           ))}
         </div>
       )}
 
       {selectedTicket && (
-        <TicketDetailDialog ticket={selectedTicket} open={isDetailOpen} onOpenChange={setIsDetailOpen} />
+        <TicketDetailDialog
+          ticket={selectedTicket}
+          open={isDetailOpen}
+          onOpenChange={setIsDetailOpen}
+          onTicketUpdated={() => {
+            // Recargar tickets si es necesario
+          }}
+        />
       )}
     </div>
   )

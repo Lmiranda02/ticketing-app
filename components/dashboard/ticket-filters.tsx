@@ -11,11 +11,11 @@ interface TicketFiltersProps {
 
 export function TicketFilters({ selectedPriority, selectedStatus, onFilterChange }: TicketFiltersProps) {
   return (
-    <div className="flex flex-col sm:flex-row gap-4">
-      <div className="flex items-center gap-2">
-        <span className="text-sm font-medium">Prioridad:</span>
+    <div className="flex flex-col sm:flex-row gap-4 w-full max-w-3xl mx-auto">
+      <div className="flex items-center gap-2 flex-1">
+        <span className="text-sm font-medium whitespace-nowrap">Prioridad:</span>
         <Select value={selectedPriority} onValueChange={(value) => onFilterChange(value, selectedStatus)}>
-          <SelectTrigger className="w-[180px]">
+          <SelectTrigger className="w-full">
             <SelectValue placeholder="Todas las prioridades" />
           </SelectTrigger>
           <SelectContent>
@@ -25,10 +25,10 @@ export function TicketFilters({ selectedPriority, selectedStatus, onFilterChange
           </SelectContent>
         </Select>
       </div>
-      <div className="flex items-center gap-2">
-        <span className="text-sm font-medium">Estado:</span>
+      <div className="flex items-center gap-2 flex-1">
+        <span className="text-sm font-medium whitespace-nowrap">Estado:</span>
         <Select value={selectedStatus} onValueChange={(value) => onFilterChange(selectedPriority, value)}>
-          <SelectTrigger className="w-[180px]">
+          <SelectTrigger className="w-full">
             <SelectValue placeholder="Todos los estados" />
           </SelectTrigger>
           <SelectContent>
@@ -39,7 +39,7 @@ export function TicketFilters({ selectedPriority, selectedStatus, onFilterChange
           </SelectContent>
         </Select>
       </div>
-      <Button variant="outline" onClick={() => onFilterChange("all", "all")} className="ml-auto">
+      <Button variant="outline" onClick={() => onFilterChange("all", "all")} className="sm:ml-auto">
         Limpiar filtros
       </Button>
     </div>

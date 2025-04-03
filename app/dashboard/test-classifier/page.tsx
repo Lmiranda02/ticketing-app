@@ -21,7 +21,9 @@ export default function TestClassifierPage() {
     setIsLoading(true)
 
     try {
-      const response = await fetch("/api/test-classifier", {
+      // Usar URL absoluta
+      const baseUrl = window.location.origin
+      const response = await fetch(`${baseUrl}/api/test-classifier`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -45,8 +47,8 @@ export default function TestClassifierPage() {
         text="Prueba el clasificador de tickets para verificar su funcionamiento."
       />
 
-      <Card className="w-full">
-        <CardHeader>
+      <Card className="w-full max-w-3xl mx-auto">
+        <CardHeader className="text-center">
           <CardTitle>Prueba de Clasificación</CardTitle>
           <CardDescription>Ingresa un asunto y contenido para probar cómo se clasificaría un ticket.</CardDescription>
         </CardHeader>
@@ -75,15 +77,15 @@ export default function TestClassifierPage() {
             />
           </div>
         </CardContent>
-        <CardFooter className="flex flex-col items-start space-y-4">
+        <CardFooter className="flex flex-col items-center space-y-4">
           <Button onClick={handleTest} disabled={isLoading || !subject || !content}>
             {isLoading ? "Clasificando..." : "Probar Clasificación"}
           </Button>
 
           {result && (
-            <div className="w-full pt-4 border-t">
+            <div className="w-full pt-4 border-t text-center">
               <h3 className="text-sm font-medium mb-2">Resultado:</h3>
-              <div className="flex items-center">
+              <div className="flex items-center justify-center">
                 <span className="mr-2">Prioridad:</span>
                 <Badge
                   className={result.priority === "alta" ? "bg-red-100 text-red-800" : "bg-yellow-100 text-yellow-800"}

@@ -67,7 +67,28 @@ export async function GET() {
       })
     }
 
-    // Si tenemos tokens válidos, intentamos conectar a Gmail
+    // Obtener la última fecha de sincronización
+    let lastSyncDate
+    try {
+      const { db } = await connectToDatabase()
+      const syncInfo = await db.collection("sync_info").findOne({ type: "gmail" })
+
+      if (syncInfo && syncInfo.lastSync) {
+        lastSyncDate = new Date(syncInfo.lastSync)
+        console.log(`Última sincronización: ${lastSyncDate.toISOString()}`)
+      } else {
+        // Si no hay registro previo, crear uno
+        lastSyncDate = new Date(0) // 1970-01-01
+        await db.collection("sync_info").insertOne({
+          type: "gmail",
+          lastSync: new Date().toISOString(),
+        })
+      }
+    } catch (error) {
+      console.error("Error al obtener información de sincronización:", error)
+      lastSyncDate = new Date(0)
+    }
+
     // Obtener mensajes no leídos
     const response = await gmail.users.messages.list({
       userId: "me",
@@ -77,14 +98,45 @@ export async function GET() {
 
     const messages = response.data.messages || []
 
+    // Obtener IDs de mensajes ya procesados
+    let processedMessageIds = []
+    try {
+      const { db } = await connectToDatabase()
+      const tickets = await db
+        .collection("tickets")
+        .find({}, { projection: { messageId: 1 } })
+        .toArray()
+      processedMessageIds = tickets.map((ticket) => ticket.messageId)
+    } catch (error) {
+      console.error("Error al obtener tickets procesados:", error)
+    }
+
+    const now = new Date()
+
     for (const message of messages) {
       if (!message.id) continue
+
+      // Verificar si el mensaje ya ha sido procesado
+      if (processedMessageIds.includes(message.id)) {
+        console.log(`Mensaje ${message.id} ya procesado, omitiendo...`)
+        continue
+      }
 
       // Obtener detalles completos del mensaje
       const fullMessage = await gmail.users.messages.get({
         userId: "me",
         id: message.id,
       })
+
+      // Verificar la fecha del mensaje
+      const internalDate = fullMessage.data.internalDate
+      if (internalDate) {
+        const messageDate = new Date(Number.parseInt(internalDate))
+        if (messageDate <= lastSyncDate) {
+          console.log(`Mensaje ${message.id} es anterior a la última sincronización, omitiendo...`)
+          continue
+        }
+      }
 
       // Extraer datos del mensaje
       const headers = fullMessage.data.payload?.headers || []
@@ -111,7 +163,6 @@ export async function GET() {
       console.log(`Clasificación para ticket "${subject}": ${classification.priority}`)
 
       // Determinar SLA basado en la prioridad
-      const now = new Date()
       const slaDeadline =
         classification.priority === "alta" ? addHours(now, 24).toISOString() : addHours(now, 48).toISOString()
 
@@ -153,6 +204,16 @@ export async function GET() {
       } else {
         console.log("Modo desarrollo: Omitiendo marcar mensaje como leído")
       }
+    }
+
+    // Actualizar la fecha de última sincronización
+    try {
+      const { db } = await connectToDatabase()
+      await db
+        .collection("sync_info")
+        .updateOne({ type: "gmail" }, { $set: { lastSync: now.toISOString() } }, { upsert: true })
+    } catch (error) {
+      console.error("Error al actualizar fecha de sincronización:", error)
     }
 
     return NextResponse.json({

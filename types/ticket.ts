@@ -7,5 +7,5 @@ export interface Ticket {
   status: string
   createdAt: string
   slaDeadline: string
+  messageId?: string // Added property
 }
-

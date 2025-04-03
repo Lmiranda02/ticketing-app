@@ -12,7 +12,9 @@ export function GmailSettings() {
   const handleSyncEmails = async () => {
     setIsLoading(true)
     try {
-      const response = await fetch("/api/gmail")
+      // Usar URL absoluta
+      const baseUrl = window.location.origin
+      const response = await fetch(`${baseUrl}/api/gmail`)
       const data = await response.json()
 
       if (data.success) {
@@ -36,21 +38,21 @@ export function GmailSettings() {
   }
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2">
+    <Card className="max-w-3xl mx-auto">
+      <CardHeader className="text-center">
+        <CardTitle className="flex items-center justify-center gap-2">
           <Mail className="h-5 w-5" />
           Configuración de Gmail
         </CardTitle>
         <CardDescription>Sincroniza manualmente los correos de Gmail para crear tickets.</CardDescription>
       </CardHeader>
       <CardContent>
-        <p className="text-sm text-muted-foreground">
+        <p className="text-sm text-muted-foreground text-center">
           La sincronización automática ocurre cada 15 minutos. También puedes sincronizar manualmente haciendo clic en
           el botón a continuación.
         </p>
       </CardContent>
-      <CardFooter>
+      <CardFooter className="flex justify-center">
         <Button onClick={handleSyncEmails} disabled={isLoading} className="flex items-center gap-2">
           {isLoading ? (
             <>
