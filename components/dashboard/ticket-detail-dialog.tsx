@@ -15,7 +15,7 @@ import {
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { SlaCountdown } from "@/components/dashboard/sla-countdown"
-import { updateTicketStatus } from "@/lib/tickets"
+import { updateTicketStatus, deleteTicket } from "@/lib/tickets"
 import { cn } from "@/lib/utils"
 import { Loader2, Mail, Check, Trash2, Edit, AlertTriangle } from "lucide-react"
 import { TicketEditDialog } from "@/components/dashboard/ticket-edit-dialog"
@@ -29,7 +29,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
-import { toast } from "@/components/ui/use-toast"
+import { useToast } from "@/components/ui/use-toast"
 import { useTickets } from "@/contexts/ticket-context"
 
 interface TicketDetailDialogProps {
@@ -44,6 +44,9 @@ export function TicketDetailDialog({ ticket, open, onOpenChange }: TicketDetailD
   const [currentTicket, setCurrentTicket] = useState<Ticket>(ticket)
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false)
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false)
+  const [deleteError, setDeleteError] = useState<string | null>(null)
+
+  const { toast } = useToast()
 
   const priorityColor = {
     alta: "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300",
@@ -76,6 +79,8 @@ export function TicketDetailDialog({ ticket, open, onOpenChange }: TicketDetailD
           title: "Estado actualizado",
           description: `El ticket ha sido marcado como ${statusText[newStatus as keyof typeof statusText]}.`,
         })
+      } else {
+        throw new Error("No se pudo actualizar el estado del ticket")
       }
     } catch (error) {
       console.error("Error al actualizar el estado del ticket:", error)
@@ -134,15 +139,13 @@ export function TicketDetailDialog({ ticket, open, onOpenChange }: TicketDetailD
 
   const handleDelete = async () => {
     setIsUpdating(true)
+    setDeleteError(null)
+
     try {
-      const baseUrl = window.location.origin
-      const response = await fetch(`${baseUrl}/api/tickets/${currentTicket.id}`, {
-        method: "DELETE",
-      })
+      // Usar la función deleteTicket del lib/tickets.ts
+      const success = await deleteTicket(currentTicket.id)
 
-      const data = await response.json()
-
-      if (data.success) {
+      if (success) {
         setIsDeleteDialogOpen(false)
         onOpenChange(false)
         await refreshTickets() // Refrescar los tickets después de eliminar
@@ -151,15 +154,11 @@ export function TicketDetailDialog({ ticket, open, onOpenChange }: TicketDetailD
           description: "El ticket ha sido eliminado correctamente.",
         })
       } else {
-        throw new Error("No se pudo eliminar el ticket")
+        setDeleteError("No se pudo eliminar el ticket. Por favor, intente nuevamente.")
       }
     } catch (error) {
       console.error("Error al eliminar el ticket:", error)
-      toast({
-        variant: "destructive",
-        title: "Error",
-        description: "No se pudo eliminar el ticket.",
-      })
+      setDeleteError("Error al eliminar el ticket. Por favor, intente nuevamente.")
     } finally {
       setIsUpdating(false)
     }
@@ -315,6 +314,9 @@ export function TicketDetailDialog({ ticket, open, onOpenChange }: TicketDetailD
               ¿Estás seguro de que deseas eliminar este ticket? Esta acción no se puede deshacer.
             </AlertDialogDescription>
           </AlertDialogHeader>
+
+          {deleteError && <div className="bg-red-100 text-red-800 p-3 rounded-md text-sm mt-2">{deleteError}</div>}
+
           <AlertDialogFooter>
             <AlertDialogCancel disabled={isUpdating}>Cancelar</AlertDialogCancel>
             <AlertDialogAction

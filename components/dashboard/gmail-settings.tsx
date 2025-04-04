@@ -4,10 +4,11 @@ import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Loader2, Mail, RefreshCw } from "lucide-react"
-import { toast } from "@/components/ui/use-toast"
+import { useToast } from "@/components/ui/use-toast"
 
 export function GmailSettings() {
   const [isLoading, setIsLoading] = useState(false)
+  const { toast } = useToast()
 
   const handleSyncEmails = async () => {
     setIsLoading(true)

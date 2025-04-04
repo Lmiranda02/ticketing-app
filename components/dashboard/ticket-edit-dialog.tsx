@@ -18,7 +18,8 @@ import { Textarea } from "@/components/ui/textarea"
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Loader2, Save } from "lucide-react"
-import { toast } from "@/components/ui/use-toast"
+import { useToast } from "@/components/ui/use-toast"
+import { updateTicket } from "@/lib/tickets"
 
 interface TicketEditDialogProps {
   ticket: Ticket
@@ -36,6 +37,8 @@ export function TicketEditDialog({ ticket, open, onOpenChange, onTicketUpdated }
     status: ticket.status,
   })
 
+  const { toast } = useToast()
+
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target
     setFormData((prev) => ({ ...prev, [name]: value }))
@@ -50,19 +53,10 @@ export function TicketEditDialog({ ticket, open, onOpenChange, onTicketUpdated }
     setIsSubmitting(true)
 
     try {
-      // Usar URL absoluta con window.location.origin
-      const baseUrl = window.location.origin
-      const response = await fetch(`${baseUrl}/api/tickets/${ticket.id}`, {
-        method: "PATCH",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(formData),
-      })
+      // Usar la función updateTicket del lib/tickets.ts
+      const success = await updateTicket(ticket.id, formData)
 
-      const data = await response.json()
-
-      if (data.success) {
+      if (success) {
         toast({
           title: "Ticket actualizado",
           description: "El ticket ha sido actualizado correctamente.",
@@ -70,7 +64,7 @@ export function TicketEditDialog({ ticket, open, onOpenChange, onTicketUpdated }
         onTicketUpdated()
         onOpenChange(false)
       } else {
-        throw new Error(data.error || "Error al actualizar el ticket")
+        throw new Error("Error al actualizar el ticket")
       }
     } catch (error) {
       console.error("Error al actualizar el ticket:", error)

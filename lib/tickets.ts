@@ -3,6 +3,12 @@
 import { connectToDatabase } from "@/lib/mongodb"
 import type { Ticket } from "@/types/ticket"
 
+const baseUrl =
+  typeof window !== "undefined"
+    ? window.location.origin
+    : process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000"
+
+
 export async function getTickets(): Promise<Ticket[]> {
   try {
     const { db } = await connectToDatabase()
@@ -33,10 +39,16 @@ export async function getTicketById(id: string): Promise<Ticket | null> {
 
 export async function updateTicketStatus(id: string, status: string): Promise<boolean> {
   try {
-    const { db } = await connectToDatabase()
-    const result = await db.collection("tickets").updateOne({ id }, { $set: { status } })
+    const response = await fetch(`${baseUrl}/api/tickets/${id}`, {
+      method: "PATCH",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ status }),
+    })
 
-    return result.modifiedCount > 0
+    const data = await response.json()
+    return data.success
   } catch (error) {
     console.error("Error al actualizar estado del ticket:", error)
     return false
@@ -45,10 +57,12 @@ export async function updateTicketStatus(id: string, status: string): Promise<bo
 
 export async function deleteTicket(id: string): Promise<boolean> {
   try {
-    const { db } = await connectToDatabase()
-    const result = await db.collection("tickets").deleteOne({ id })
+    const response = await fetch(`${baseUrl}/api/tickets/${id}`, {
+      method: "DELETE",
+    })
 
-    return result.deletedCount > 0
+    const data = await response.json()
+    return data.success
   } catch (error) {
     console.error("Error al eliminar ticket:", error)
     return false
@@ -58,8 +72,6 @@ export async function deleteTicket(id: string): Promise<boolean> {
 // Función para marcar un correo como leído
 export async function markEmailAsRead(messageId: string): Promise<boolean> {
   try {
-    // Usar la URL absoluta con window.location.origin
-    const baseUrl = typeof window !== "undefined" ? window.location.origin : ""
     const response = await fetch(`${baseUrl}/api/gmail/mark-read`, {
       method: "POST",
       headers: {
@@ -76,11 +88,10 @@ export async function markEmailAsRead(messageId: string): Promise<boolean> {
   }
 }
 
+
 // Función para actualizar un ticket
 export async function updateTicket(id: string, updates: Partial<Ticket>): Promise<boolean> {
   try {
-    // Usar la URL absoluta con window.location.origin
-    const baseUrl = typeof window !== "undefined" ? window.location.origin : ""
     const response = await fetch(`${baseUrl}/api/tickets/${id}`, {
       method: "PATCH",
       headers: {
@@ -88,6 +99,12 @@ export async function updateTicket(id: string, updates: Partial<Ticket>): Promis
       },
       body: JSON.stringify(updates),
     })
+
+    if (!response.ok) {
+      const errorData = await response.json()
+      console.error("Error en la respuesta del servidor:", errorData)
+      return false
+    }
 
     const data = await response.json()
     return data.success
