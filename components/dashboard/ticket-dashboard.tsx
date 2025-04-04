@@ -1,18 +1,23 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import type { Ticket } from "@/types/ticket"
 import { TicketList } from "@/components/dashboard/ticket-list"
 import { TicketFilters } from "@/components/dashboard/ticket-filters"
+import { useTickets } from "@/contexts/ticket-context"
+import { Loader2 } from "lucide-react"
 
-interface TicketDashboardProps {
-  tickets: Ticket[]
-}
-
-export function TicketDashboard({ tickets }: TicketDashboardProps) {
-  const [filteredTickets, setFilteredTickets] = useState<Ticket[]>(tickets)
+export function TicketDashboard() {
+  const { tickets, loading, error } = useTickets()
+  const [filteredTickets, setFilteredTickets] = useState<Ticket[]>([])
   const [selectedPriority, setSelectedPriority] = useState<string>("all")
   const [selectedStatus, setSelectedStatus] = useState<string>("all")
+
+  useEffect(() => {
+    if (tickets) {
+      handleFilterChange(selectedPriority, selectedStatus)
+    }
+  }, [tickets, selectedPriority, selectedStatus])
 
   const handleFilterChange = (priority: string, status: string) => {
     setSelectedPriority(priority)
@@ -29,6 +34,22 @@ export function TicketDashboard({ tickets }: TicketDashboardProps) {
     }
 
     setFilteredTickets(filtered)
+  }
+
+  if (loading) {
+    return (
+      <div className="flex justify-center items-center h-40">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    )
+  }
+
+  if (error) {
+    return (
+      <div className="flex justify-center items-center h-40 text-destructive">
+        <p>{error}</p>
+      </div>
+    )
   }
 
   return (

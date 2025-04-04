@@ -1,15 +1,34 @@
-import type { NextAuthOptions } from "next-auth"
+import type { NextAuthOptions, User } from "next-auth"
+
+declare module "next-auth" {
+  interface User {
+    role?: string
+  }
+
+  interface Session {
+    user: {
+      id?: string
+      role?: string
+      name?: string | null
+      email?: string | null
+      image?: string | null
+    }
+  }
+}
 import CredentialsProvider from "next-auth/providers/credentials"
-import GoogleProvider from "next-auth/providers/google"
+// import GoogleProvider from "next-auth/providers/google" // Comentado
 import { connectToDatabase } from "@/lib/mongodb"
 import { compare } from "bcrypt"
 
 export const authOptions: NextAuthOptions = {
   providers: [
+    // Comentado el proveedor de Google
+    /*
     GoogleProvider({
       clientId: process.env.GOOGLE_CLIENT_ID as string,
       clientSecret: process.env.GOOGLE_CLIENT_SECRET as string,
     }),
+    */
     CredentialsProvider({
       name: "credentials",
       credentials: {

@@ -17,8 +17,8 @@ import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { updateTicket } from "@/lib/tickets"
 import { Loader2, Save } from "lucide-react"
+import { toast } from "@/components/ui/use-toast"
 
 interface TicketEditDialogProps {
   ticket: Ticket
@@ -50,17 +50,35 @@ export function TicketEditDialog({ ticket, open, onOpenChange, onTicketUpdated }
     setIsSubmitting(true)
 
     try {
-      const success = await updateTicket(ticket.id, formData)
+      // Usar URL absoluta con window.location.origin
+      const baseUrl = window.location.origin
+      const response = await fetch(`${baseUrl}/api/tickets/${ticket.id}`, {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(formData),
+      })
 
-      if (success) {
+      const data = await response.json()
+
+      if (data.success) {
+        toast({
+          title: "Ticket actualizado",
+          description: "El ticket ha sido actualizado correctamente.",
+        })
         onTicketUpdated()
         onOpenChange(false)
       } else {
-        // Manejar error
-        console.error("Error al actualizar el ticket")
+        throw new Error(data.error || "Error al actualizar el ticket")
       }
     } catch (error) {
       console.error("Error al actualizar el ticket:", error)
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "No se pudo actualizar el ticket. Intente nuevamente.",
+      })
     } finally {
       setIsSubmitting(false)
     }

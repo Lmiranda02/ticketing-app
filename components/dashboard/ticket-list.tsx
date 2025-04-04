@@ -20,7 +20,7 @@ export function TicketList({ tickets }: TicketListProps) {
 
   return (
     <div className="w-full">
-      {tickets.length === 0 ? (
+      {!tickets || tickets.length === 0 ? (
         <div className="flex flex-col items-center justify-center rounded-lg border border-dashed p-8 text-center animate-in fade-in-50">
           <div className="mx-auto flex max-w-[420px] flex-col items-center justify-center text-center">
             <h3 className="mt-4 text-lg font-semibold">No hay tickets</h3>
@@ -38,14 +38,7 @@ export function TicketList({ tickets }: TicketListProps) {
       )}
 
       {selectedTicket && (
-        <TicketDetailDialog
-          ticket={selectedTicket}
-          open={isDetailOpen}
-          onOpenChange={setIsDetailOpen}
-          onTicketUpdated={() => {
-            // Recargar tickets si es necesario
-          }}
-        />
+        <TicketDetailDialog ticket={selectedTicket} open={isDetailOpen} onOpenChange={setIsDetailOpen} />
       )}
     </div>
   )

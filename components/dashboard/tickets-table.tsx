@@ -9,12 +9,11 @@ import { Button } from "@/components/ui/button"
 import { SlaCountdown } from "@/components/dashboard/sla-countdown"
 import { TicketDetailDialog } from "@/components/dashboard/ticket-detail-dialog"
 import { cn } from "@/lib/utils"
+import { useTickets } from "@/contexts/ticket-context"
+import { Loader2 } from "lucide-react"
 
-interface TicketsTableProps {
-  tickets: Ticket[]
-}
-
-export function TicketsTable({ tickets }: TicketsTableProps) {
+export function TicketsTable() {
+  const { tickets, loading, error } = useTickets()
   const [selectedTicket, setSelectedTicket] = useState<Ticket | null>(null)
   const [isDetailOpen, setIsDetailOpen] = useState(false)
 
@@ -40,6 +39,22 @@ export function TicketsTable({ tickets }: TicketsTableProps) {
     setIsDetailOpen(true)
   }
 
+  if (loading) {
+    return (
+      <div className="flex justify-center items-center h-40">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    )
+  }
+
+  if (error) {
+    return (
+      <div className="flex justify-center items-center h-40 text-destructive">
+        <p>{error}</p>
+      </div>
+    )
+  }
+
   return (
     <div className="max-w-5xl mx-auto w-full">
       <div className="rounded-md border overflow-hidden">
@@ -57,7 +72,7 @@ export function TicketsTable({ tickets }: TicketsTableProps) {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {tickets.length === 0 ? (
+              {!tickets || tickets.length === 0 ? (
                 <TableRow>
                   <TableCell colSpan={7} className="h-24 text-center">
                     No hay tickets disponibles
@@ -100,14 +115,7 @@ export function TicketsTable({ tickets }: TicketsTableProps) {
       </div>
 
       {selectedTicket && (
-        <TicketDetailDialog
-          ticket={selectedTicket}
-          open={isDetailOpen}
-          onOpenChange={setIsDetailOpen}
-          onTicketUpdated={() => {
-            // Recargar tickets si es necesario
-          }}
-        />
+        <TicketDetailDialog ticket={selectedTicket} open={isDetailOpen} onOpenChange={setIsDetailOpen} />
       )}
     </div>
   )

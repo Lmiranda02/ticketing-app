@@ -15,7 +15,7 @@ import {
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { SlaCountdown } from "@/components/dashboard/sla-countdown"
-import { updateTicketStatus, deleteTicket } from "@/lib/tickets"
+import { updateTicketStatus } from "@/lib/tickets"
 import { cn } from "@/lib/utils"
 import { Loader2, Mail, Check, Trash2, Edit, AlertTriangle } from "lucide-react"
 import { TicketEditDialog } from "@/components/dashboard/ticket-edit-dialog"
@@ -30,15 +30,16 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
 import { toast } from "@/components/ui/use-toast"
+import { useTickets } from "@/contexts/ticket-context"
 
 interface TicketDetailDialogProps {
   ticket: Ticket
   open: boolean
   onOpenChange: (open: boolean) => void
-  onTicketUpdated?: () => void
 }
 
-export function TicketDetailDialog({ ticket, open, onOpenChange, onTicketUpdated }: TicketDetailDialogProps) {
+export function TicketDetailDialog({ ticket, open, onOpenChange }: TicketDetailDialogProps) {
+  const { refreshTickets } = useTickets()
   const [isUpdating, setIsUpdating] = useState(false)
   const [currentTicket, setCurrentTicket] = useState<Ticket>(ticket)
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false)
@@ -70,9 +71,7 @@ export function TicketDetailDialog({ ticket, open, onOpenChange, onTicketUpdated
           ...currentTicket,
           status: newStatus,
         })
-        if (onTicketUpdated) {
-          onTicketUpdated()
-        }
+        await refreshTickets() // Refrescar los tickets después de actualizar
         toast({
           title: "Estado actualizado",
           description: `El ticket ha sido marcado como ${statusText[newStatus as keyof typeof statusText]}.`,
@@ -102,7 +101,6 @@ export function TicketDetailDialog({ ticket, open, onOpenChange, onTicketUpdated
 
     setIsUpdating(true)
     try {
-      // Llamar directamente a la API en lugar de usar la función del servidor
       const baseUrl = window.location.origin
       const response = await fetch(`${baseUrl}/api/gmail/mark-read`, {
         method: "POST",
@@ -137,13 +135,17 @@ export function TicketDetailDialog({ ticket, open, onOpenChange, onTicketUpdated
   const handleDelete = async () => {
     setIsUpdating(true)
     try {
-      const result = await deleteTicket(currentTicket.id)
-      if (result) {
+      const baseUrl = window.location.origin
+      const response = await fetch(`${baseUrl}/api/tickets/${currentTicket.id}`, {
+        method: "DELETE",
+      })
+
+      const data = await response.json()
+
+      if (data.success) {
         setIsDeleteDialogOpen(false)
         onOpenChange(false)
-        if (onTicketUpdated) {
-          onTicketUpdated()
-        }
+        await refreshTickets() // Refrescar los tickets después de eliminar
         toast({
           title: "Ticket eliminado",
           description: "El ticket ha sido eliminado correctamente.",
@@ -163,10 +165,8 @@ export function TicketDetailDialog({ ticket, open, onOpenChange, onTicketUpdated
     }
   }
 
-  const handleTicketUpdated = () => {
-    if (onTicketUpdated) {
-      onTicketUpdated()
-    }
+  const handleTicketUpdated = async () => {
+    await refreshTickets() // Refrescar los tickets después de actualizar
     // Recargar el ticket actual
     setCurrentTicket((prev) => ({ ...prev, ...currentTicket }))
   }
